@@ -1,0 +1,66 @@
+version: '3.9'
+
+networks:
+  web:
+    external: true
+    driver:  bridge
+
+
+services:
+  django:
+    build:
+      context: .
+      dockerfile: Dockerfile.django
+      args:
+        - DEV=true
+    ports:
+      - "8000:8000"
+      - "5900:5900"
+    volumes:
+      - ./app:/app
+      - ./scripts:/scripts
+    # user: "${UID}:${GID}"
+    # env_file:
+    #   - .env
+    shm_size: '2g'
+    command: >
+      sh -c "python manage.py wait_for_db &&
+             python manage.py migrate &&
+             python manage.py migrate django_celery_results &&
+             (/scripts/start-up.sh & python manage.py runserver 0.0.0.0:8000)"
+    environment:
+      - DB_HOST=db
+      - DB_NAME=devdb
+      - DB_USER=devuser
+      - DB_PASS=changeme
+      - TELEGRAM_BOT_TOKEN=INPUT_YOUR_BOT_TOKEN
+      - TELEGRAM_CHAT_ID=INPUT_YOUR_BOT_CHAT_ID
+    depends_on:
+      - db
+      - redis
+    networks:
+      - web
+
+  db:
+    image: mysql:latest
+    volumes:
+      - mysql-data:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=changeme
+      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+      - MYSQL_DATABASE=devdb
+      - MYSQL_USER=devuser
+      - MYSQL_PASSWORD=changeme
+    networks:
+      - web
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+    - web
+
+volumes:
+  mysql-data:
