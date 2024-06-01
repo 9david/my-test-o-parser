@@ -21,3 +21,5 @@
 <span class="l"> **3.2** Во втором **docker-compose run --rm django sh -c "celery -A app worker --loglevel=info"**</span>
 
 <span class="l"> **3.3** В третьем **docker-compose run --rm django sh -c "python manage.py run_telegram_bot"**</span>
+
+<span class="l"> **3.4** Создать в приложении testparser директорию "static"</span>
